@@ -583,6 +583,8 @@ class WP_Import extends WP_Importer {
 			return;
 		}
 
+		$wp_version = get_bloginfo( 'version' );
+
 		foreach ( $term['termmeta'] as $meta ) {
 			/**
 			 * Filters the meta key for an imported piece of term meta.
@@ -601,7 +603,11 @@ class WP_Import extends WP_Importer {
 			// Export gets meta straight from the DB so could have a serialized string
 			$value = maybe_unserialize( $meta['value'] );
 
-			add_term_meta( $term_id, wp_slash( $key ), wp_slash_strings_only( $value ) );
+			if ( version_compare( $wp_version, '5.6', '>=' ) ) {
+				add_term_meta( $term_id, wp_slash( $key ), wp_slash( $value ) );
+			} else {
+				add_term_meta( $term_id, wp_slash( $key ), wp_slash_strings_only( $value ) );
+			}
 
 			/**
 			 * Fires after term meta is imported.
@@ -853,10 +859,16 @@ class WP_Import extends WP_Importer {
 
 						do_action( 'wp_import_insert_comment', $inserted_comments[ $key ], $comment, $comment_post_id, $post );
 
+						$wp_version = get_bloginfo( 'version' );
+
 						foreach ( $comment['commentmeta'] as $meta ) {
 							$value = maybe_unserialize( $meta['value'] );
 
-							add_comment_meta( $inserted_comments[ $key ], wp_slash( $meta['key'] ), wp_slash_strings_only( $value ) );
+							if ( version_compare( $wp_version, '5.6', '>=' ) ) {
+								add_comment_meta( $inserted_comments[ $key ], wp_slash( $meta['key'] ), wp_slash( $value ) );
+							} else {
+								add_comment_meta( $inserted_comments[ $key ], wp_slash( $meta['key'] ), wp_slash_strings_only( $value ) );
+							}
 						}
 
 						$num_comments++;
@@ -873,6 +885,8 @@ class WP_Import extends WP_Importer {
 
 			// add/update post meta
 			if ( ! empty( $post['postmeta'] ) ) {
+				$wp_version = get_bloginfo( 'version' );
+
 				foreach ( $post['postmeta'] as $meta ) {
 					$key   = apply_filters( 'import_post_meta_key', $meta['key'], $post_id, $post );
 					$value = false;
@@ -891,7 +905,11 @@ class WP_Import extends WP_Importer {
 							$value = maybe_unserialize( $meta['value'] );
 						}
 
-						add_post_meta( $post_id, wp_slash( $key ), wp_slash_strings_only( $value ) );
+						if ( version_compare( $wp_version, '5.6', '>=' ) ) {
+							add_post_meta( $post_id, wp_slash( $key ), wp_slash( $value ) );
+						} else {
+							add_post_meta( $post_id, wp_slash( $key ), wp_slash_strings_only( $value ) );
+						}
 
 						do_action( 'import_post_meta', $post_id, $key, $value );
 
